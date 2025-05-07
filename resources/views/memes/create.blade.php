@@ -181,8 +181,8 @@
             ctx.drawImage(uploadedImage, 0, 0, canvas.width, canvas.height);
 
             ctx.font = "24px Arial";
-            ctx.fillStyle = "black";
-            ctx.strokeStyle = "white";
+            ctx.fillStyle = "white";
+            ctx.strokeStyle = "black";
             ctx.lineWidth = 2;
             ctx.textAlign = "center";
 
