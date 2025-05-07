@@ -64,7 +64,7 @@
                             <div class="form-group">
                                 <label>Textes à ajouter</label><br>
                                 <span><ion-icon name="information-circle-outline"
-                                    style="vertical-align: middle; display; inline; color: blue; font-size: 20px;"></ion-icon>
+                                        style="vertical-align: middle; display; inline; color: blue; font-size: 20px;"></ion-icon>
                                     Vous pouvez déplacer les textes ajouté partout sur l'image
                                 </span>
                                 <div id="textFieldsContainer"></div>
@@ -197,7 +197,7 @@
             ctx.font = "16px Arial";
             ctx.fillStyle = "rgba(255,255,255,0.7)";
             ctx.textAlign = "right";
-            ctx.fillText("© MemesFlow", canvas.width - 10, canvas.height - 10);
+            ctx.fillText("memeflow.app", canvas.width - 10, canvas.height - 10);
         }
 
         // Drag & Drop sur canvas
@@ -304,6 +304,8 @@
         updateButtonsState();
     });
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
 
 <!-- Modal de prévisualisation -->
 <div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
