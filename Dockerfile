@@ -1,31 +1,35 @@
+# -------------- Dockerfile --------------
+
 FROM php:8.2-apache
 
-# 1) Installe les extensions système
+# Installe les extensions nécessaires
 RUN apt-get update && apt-get install -y \
-    git unzip curl libpng-dev libonig-dev libxml2-dev zip \
+    libpng-dev libonig-dev libxml2-dev zip unzip \
     libzip-dev libjpeg-dev libfreetype6-dev \
     && docker-php-ext-install pdo_mysql mbstring zip exif pcntl bcmath gd
 
-# 2) Active mod_rewrite
-RUN a2enmod rewrite
+# Active mod_rewrite et définit DocumentRoot sur public/
+RUN a2enmod rewrite \
+    && sed -ri \
+    -e 's!DocumentRoot /var/www/html!DocumentRoot /var/www/html/public!g' \
+    -e 's!<Directory /var/www/html>!<Directory /var/www/html/public>!g' \
+    /etc/apache2/sites-available/*.conf
 
-# 3) Installe Composer
+# Installe Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# 4) Copie le projet et donne les droits
+# Copie le projet et installe les dépendances
 COPY . /var/www/html
 WORKDIR /var/www/html
+
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 storage bootstrap/cache
 
-# 5) Installe les dépendances PHP
 RUN composer install --no-dev --optimize-autoloader
 
-# 6) Prépare l’environnement
+# Prépare l’environnement
 RUN cp .env.example .env \
     && php artisan key:generate
-
-# On n’exécute PLUS php artisan migrate ici
 
 EXPOSE 80
 CMD ["apache2-foreground"]
