@@ -268,20 +268,19 @@
 
             const imageData = canvas.toDataURL("image/png");
 
+            const formData = new FormData();
+            formData.append("image", imageData);
+
             fetch(this.action, {
                     method: "POST",
                     headers: {
-                        "Content-Type": "application/json",
                         "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
                     },
-                    body: JSON.stringify({
-                        image: imageData
-                    }),
+                    body: formData,
                 })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        // ✅ Redirige vers la page d’accueil (ou autre)
                         window.location.href = "/";
                     } else {
                         alert("Erreur : " + (data.error || "Échec de l'enregistrement."));
