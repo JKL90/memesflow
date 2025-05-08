@@ -64,8 +64,8 @@
                             <div class="form-group">
                                 <label>Textes à ajouter</label><br>
                                 <span><ion-icon name="information-circle-outline"
-                                        style="vertical-align: middle; display; inline; color: blue; font-size: 20px;"></ion-icon>
-                                    Vous pouvez déplacer les textes ajouté partout sur l'image
+                                    style="vertical-align: middle; display; inline; color: blue; font-size: 20px;"></ion-icon>
+                                    Vous pouvez déplacer les textes ajoutés partout sur l'image
                                 </span>
                                 <div id="textFieldsContainer"></div>
                                 <button type="button" class="btn btn-sm mt-2" id="addTextField">Ajouter un champ
