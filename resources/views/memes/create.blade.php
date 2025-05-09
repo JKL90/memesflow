@@ -30,6 +30,40 @@
             0 0 50px rgb(0, 140, 255),
             0 0 100px rgb(0, 140, 255);
     }
+
+    /* Espace entre les blocs de texte */
+    #textFieldsContainer>div {
+        margin-bottom: 1rem;
+    }
+
+    /* Alignement du color picker + bouton */
+    .color-row {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+
+    .form-control-color {
+        width: 50px !important;
+        height: 38px !important;
+        padding: 2px;
+    }
+
+    /* Bouton X */
+    .btn-danger {
+        font-weight: bold;
+        padding: 0 10px;
+        margin-left: 10px;
+        font-size: 24px;
+        line-height: 1.5;
+    }
+
+    .form-label {
+        font-size: 0.9rem;
+        margin-bottom: 0.25rem;
+        font-weight: 600;
+    }
 </style>
 
 <!-- Meme Modal -->
@@ -64,8 +98,12 @@
                             <div class="form-group">
                                 <label>Textes à ajouter</label><br>
                                 <span><ion-icon name="information-circle-outline"
-                                    style="vertical-align: middle; display; inline; color: blue; font-size: 20px;"></ion-icon>
+                                        style="vertical-align: middle; display; inline; color: blue; font-size: 20px;"></ion-icon>
                                     Vous pouvez déplacer les textes ajoutés partout sur l'image
+                                </span><br>
+                                <span><ion-icon name="information-circle-outline"
+                                        style="vertical-align: middle; display; inline; color: blue; font-size: 20px;"></ion-icon>
+                                    Choisir la couleur qui vous conviendra le mieux
                                 </span>
                                 <div id="textFieldsContainer"></div>
                                 <button type="button" class="btn btn-sm mt-2" id="addTextField">Ajouter un champ
@@ -108,7 +146,6 @@
         const canvas = document.getElementById("memeCanvas");
         const ctx = canvas.getContext("2d");
         const imageUploader = document.getElementById("imageUploader");
-        const previews = document.getElementById("previews");
         const addTextFieldBtn = document.getElementById("addTextField");
         const textFieldsContainer = document.getElementById("textFieldsContainer");
         const downloadBtn = document.getElementById("downloadMeme");
@@ -117,109 +154,145 @@
         const submitBtn = document.querySelector('#memeForm button[type="submit"]');
 
         let uploadedImage = null;
-        let textFields = [];
         let draggableTexts = [];
         let selectedText = null;
         let offsetX, offsetY;
 
-        // Upload image
         imageUploader.addEventListener("click", () => {
             const input = document.createElement("input");
             input.type = "file";
             input.accept = "image/*";
-            input.addEventListener("change", (event) => {
-                const file = event.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        const img = new Image();
-                        img.onload = function() {
-                            canvas.width = 500;
-                            canvas.height = (img.height / img.width) * 500;
-                            uploadedImage = img;
-                            drawMeme();
-                            updateButtonsState();
-                        };
-                        img.src = e.target.result;
+            input.onchange = e => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const img = new Image();
+                    img.onload = () => {
+                        canvas.width = 500;
+                        canvas.height = (img.height / img.width) * 500;
+                        uploadedImage = img;
+                        drawMeme();
+                        updateButtonsState();
                     };
-                    reader.readAsDataURL(file);
-                }
-            });
+                    img.src = reader.result;
+                };
+                reader.readAsDataURL(file);
+            };
             input.click();
         });
 
-        // Ajouter un champ texte
         addTextFieldBtn.addEventListener("click", () => {
-            const textField = document.createElement("input");
-            textField.type = "text";
-            textField.placeholder = "Entrez votre texte";
-            textField.className = "form-control mt-2";
-            textFieldsContainer.appendChild(textField);
-            textFields.push(textField);
+            const id = Date.now();
 
-            // Ajout du texte déplaçable
-            const y = 50 + draggableTexts.length * 40;
-            draggableTexts.push({
-                x: canvas.width / 2,
-                y: y,
-                content: "",
-                field: textField
+            const container = document.createElement("div");
+            container.className = "mb-3";
+
+            const textInput = document.createElement("input");
+            textInput.type = "text";
+            textInput.placeholder = "Entrez votre texte";
+            textInput.className = "form-control";
+            textInput.dataset.id = id;
+
+            const colorLabel = document.createElement("label");
+            colorLabel.innerText = "Choisir la couleur :";
+            colorLabel.className = "form-label mt-2";
+
+            const controlRow = document.createElement("div");
+            controlRow.className = "d-flex align-items-center gap-2";
+
+            const colorPicker = document.createElement("input");
+            colorPicker.type = "color";
+            colorPicker.value = "#FFFFFF";
+            colorPicker.className = "form-control form-control-color";
+            colorPicker.style.width = "60px";
+            colorPicker.dataset.id = id;
+
+            const removeBtn = document.createElement("button");
+            removeBtn.type = "button";
+            removeBtn.className = "btn btn-sm btn-danger";
+            removeBtn.innerText = "×";
+            removeBtn.title = "Supprimer";
+
+            removeBtn.addEventListener("click", () => {
+                textFieldsContainer.removeChild(container);
+                draggableTexts = draggableTexts.filter(t => t.id !== id);
+                drawMeme();
+                updateButtonsState();
             });
 
-            textField.addEventListener("input", () => {
-                const obj = draggableTexts.find(t => t.field === textField);
-                if (obj) obj.content = textField.value.toUpperCase();
+            controlRow.appendChild(colorPicker);
+            controlRow.appendChild(removeBtn);
+
+            container.appendChild(textInput);
+            container.appendChild(colorLabel);
+            container.appendChild(controlRow);
+
+            textFieldsContainer.appendChild(container);
+
+            draggableTexts.push({
+                id,
+                content: "",
+                x: canvas.width / 2,
+                y: 50 + draggableTexts.length * 40,
+                color: "#FFFFFF"
+            });
+
+            textInput.addEventListener("input", () => {
+                const obj = draggableTexts.find(t => t.id === id);
+                obj.content = textInput.value.toUpperCase();
+                drawMeme();
+                updateButtonsState();
+            });
+
+            colorPicker.addEventListener("input", () => {
+                const obj = draggableTexts.find(t => t.id === id);
+                obj.color = colorPicker.value;
                 drawMeme();
             });
+
+            updateButtonsState();
         });
 
-        // Dessiner
         function drawMeme() {
             if (!uploadedImage) return;
-
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(uploadedImage, 0, 0, canvas.width, canvas.height);
 
-            ctx.font = "24px Arial";
-            ctx.fillStyle = "white";
-            ctx.strokeStyle = "black";
-            ctx.lineWidth = 2;
-            ctx.textAlign = "center";
-
             draggableTexts.forEach(obj => {
-                if (obj.content.trim()) {
-                    ctx.fillText(obj.content, obj.x, obj.y);
-                    ctx.strokeText(obj.content, obj.x, obj.y);
-                }
+                if (!obj.content) return;
+                ctx.font = "24px Impact";
+                ctx.fillStyle = obj.color;
+                ctx.strokeStyle = "black";
+                ctx.lineWidth = 4;
+                ctx.textAlign = "center";
+                ctx.textBaseline = "top";
+                ctx.strokeText(obj.content, obj.x, obj.y);
+                ctx.fillText(obj.content, obj.x, obj.y);
             });
 
-            // Signature watermark
             ctx.font = "16px Arial";
             ctx.fillStyle = "rgba(255,255,255,0.7)";
             ctx.textAlign = "right";
-            ctx.fillText("memeflow.app", canvas.width - 10, canvas.height - 10);
+            ctx.fillText("memeflow.app", canvas.width - 10, canvas.height - 20);
         }
 
-        // Drag & Drop sur canvas
-        canvas.addEventListener("mousedown", (e) => {
+        canvas.addEventListener("mousedown", e => {
             const rect = canvas.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
-            const mouseY = e.clientY - rect.top;
-
+            const mx = e.clientX - rect.left;
+            const my = e.clientY - rect.top;
             selectedText = draggableTexts.find(obj => {
-                const textWidth = ctx.measureText(obj.content).width;
-                return mouseX >= obj.x - textWidth / 2 &&
-                    mouseX <= obj.x + textWidth / 2 &&
-                    mouseY >= obj.y - 20 && mouseY <= obj.y + 10;
+                const w = ctx.measureText(obj.content).width;
+                return mx >= obj.x - w / 2 && mx <= obj.x + w / 2 && my >= obj.y && my <= obj
+                    .y + 24;
             });
-
             if (selectedText) {
-                offsetX = mouseX - selectedText.x;
-                offsetY = mouseY - selectedText.y;
+                offsetX = mx - selectedText.x;
+                offsetY = my - selectedText.y;
             }
         });
 
-        canvas.addEventListener("mousemove", (e) => {
+        canvas.addEventListener("mousemove", e => {
             if (!selectedText) return;
             const rect = canvas.getBoundingClientRect();
             selectedText.x = e.clientX - rect.left - offsetX;
@@ -227,11 +300,9 @@
             drawMeme();
         });
 
-        canvas.addEventListener("mouseup", () => {
-            selectedText = null;
-        });
+        canvas.addEventListener("mouseup", () => selectedText = null);
+        canvas.addEventListener("mouseleave", () => selectedText = null);
 
-        // Télécharger le mème
         downloadBtn.addEventListener("click", () => {
             const link = document.createElement("a");
             link.download = `meme_${Date.now()}.png`;
@@ -239,70 +310,58 @@
             link.click();
         });
 
-        // Partage
-        shareBtn.addEventListener("click", async () => {
-            if (navigator.share) {
-                canvas.toBlob(async (blob) => {
-                    const file = new File([blob], "meme.png", {
-                        type: "image/png"
-                    });
-                    try {
-                        await navigator.share({
-                            title: "Mon mème",
-                            files: [file]
-                        });
-                    } catch (err) {
-                        alert("Le partage a échoué.");
-                        console.error(err);
-                    }
+        shareBtn.addEventListener("click", () => {
+            if (!navigator.share) return alert("Partage non supporté");
+            canvas.toBlob(blob => {
+                const file = new File([blob], "meme.png", {
+                    type: "image/png"
                 });
-            } else {
-                alert("Le partage n’est pas supporté sur cet appareil.");
-            }
+                navigator.share({
+                    files: [file],
+                    title: "Mon mème"
+                }).catch(console.error);
+            });
         });
 
-        // Soumission AJAX
         memeForm.addEventListener("submit", function(e) {
             e.preventDefault();
-            drawMeme(); // Redessine proprement
-
+            drawMeme();
             const imageData = canvas.toDataURL("image/png");
-
             const formData = new FormData();
             formData.append("image", imageData);
 
             fetch(this.action, {
                     method: "POST",
                     headers: {
-                        "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
+                        "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content
                     },
-                    body: formData,
+                    body: formData
                 })
-                .then(response => response.json())
+                .then(r => r.json())
                 .then(data => {
-                    if (data.success) {
-                        window.location.href = "/";
-                    } else {
-                        alert("Erreur : " + (data.error || "Échec de l'enregistrement."));
-                    }
+                    if (data.success) window.location.href = "/";
+                    else alert(data.error || "Erreur.");
                 })
-                .catch(error => {
+                .catch(err => {
+                    console.error(err);
                     alert("Erreur lors de l'envoi du mème.");
-                    console.error(error);
                 });
         });
 
-        // État des boutons
         function updateButtonsState() {
             const hasImage = !!uploadedImage;
-            downloadBtn.disabled = !hasImage;
-            shareBtn.disabled = !hasImage;
-            submitBtn.disabled = !hasImage;
+            const hasText = draggableTexts.some(t => t.content && t.content.trim().length > 0);
+            const enabled = hasImage && hasText;
+
+            downloadBtn.disabled = !enabled;
+            shareBtn.disabled = !enabled;
+            submitBtn.disabled = !enabled;
         }
 
-        updateButtonsState();
+        updateButtonsState(); // Initialisation au chargement
     });
 </script>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
 
